@@ -169,31 +169,31 @@ def send_sms_with_callback_token(user, mobile_token, **kwargs):
         if api_settings.PASSWORDLESS_MOBILE_NOREPLY_NUMBER:
             # We need a sending number to send properly
 
-            from twilio.rest import Client
-            twilio_client = Client(os.environ['TWILIO_ACCOUNT_SID'], os.environ['TWILIO_AUTH_TOKEN'])
+            import africastalking
+
+            africastalking.initialize(os.environ['AFRICASTALKING_USERNAME'], os.environ['AFRICASTALKING_API'])
+            sms = africastalking.SMS
 
             to_number = getattr(user, api_settings.PASSWORDLESS_USER_MOBILE_FIELD_NAME)
             if to_number.__class__.__name__ == 'PhoneNumber':
                 to_number = to_number.__str__()
 
-            twilio_client.messages.create(
-                body=base_string % mobile_token.key,
-                to=to_number,
-                from_=api_settings.PASSWORDLESS_MOBILE_NOREPLY_NUMBER
+            sms.send(base_string % mobile_token.key,[to_number],
+                api_settings.PASSWORDLESS_MOBILE_NOREPLY_NUMBER
             )
             return True
         else:
             logger.debug("Failed to send token sms. Missing PASSWORDLESS_MOBILE_NOREPLY_NUMBER.")
             return False
     except ImportError:
-        logger.debug("Couldn't import Twilio client. Is twilio installed?")
+        logger.debug("Couldn't import Africastalking client. Is twilio installed?")
         return False
     except KeyError:
         logger.debug("Couldn't send SMS."
-                  "Did you set your Twilio account tokens and specify a PASSWORDLESS_MOBILE_NOREPLY_NUMBER?")
+                  "Did you set your Africastalking account tokens and specify a PASSWORDLESS_MOBILE_NOREPLY_NUMBER?")
     except Exception as e:
         logger.debug("Failed to send token SMS to user: {}. "
-                  "Possibly no mobile number on user object or the twilio package isn't set up yet. "
+                  "Possibly no mobile number on user object or the africastalking package isn't set up yet. "
                   "Number entered was {}".format(user.id, getattr(user, api_settings.PASSWORDLESS_USER_MOBILE_FIELD_NAME)))
         logger.debug(e)
         return False
